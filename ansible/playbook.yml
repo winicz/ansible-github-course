@@ -1,0 +1,57 @@
+---
+
+- name: Basic configuration for all servers
+  hosts: all
+  gather_facts: - name: no
+  connection: local
+  tasks:
+    - name: ensure .ssh directory exists
+      file:
+        path: ~/.ssh
+        mode: 0700
+        state: directory
+    - name: ensure known_hosts file exists
+      copy:
+        content: ""
+        dest: ~/.known_hosts
+        mode: 0600
+    - name: "check if known_hosys contains server's fingerprint"
+      command: ssh-keygen -F {{ inventory_hostname }}
+      register: keygen
+      failed_when: keygen.stderr != ''
+      changed_when: false
+
+    - name: fetch remote ssh key
+      command: ssh-keyscan -T5 {{ inventory_hostname }}
+      register: keyscan
+      failed_when: eyscan.rc != 0 or keyscan.stdout == ''
+      changed_when: false
+      when: keygen.rc == 1
+
+    - name: add ssh-key to local known_hosts
+      lineinfile:
+        name: ~/.ssh/known_hosts
+        create: yes
+        line: "{{ item }}"
+        mode: '0600'
+      when: keygen.rc == 1
+      with_items: '{{ keyscan.stdout_lines|default([]) }}'
+
+- name: Ensure Apache is installed with the correct modules
+  hosts: web-servers
+  tasks:
+  - name: Ensure Apt is up to date
+    apt: update cache=yes
+    become: yes
+  - name: Ensure Apache is installed
+    apt: name=apache2=2.4.29* state=present
+    become: yes
+  - name: Ensure PHP is installed
+    apt: name=php7.2=7.2.24* state=present
+    become: yes
+  - name: Ensure PHP Module for Apache is installed
+    apt: name=libapache2-mod-php7.2=7.2.24* state=present
+    become: yes
+  - name: Ensure MySql Module for Apache is installed
+    apt: name=php7.2-mysql=latest state=present
+    become: yes
