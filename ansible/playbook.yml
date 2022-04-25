@@ -47,7 +47,6 @@
     apt: name=apache2=2.4.29* state=present
     become: yes
   - name: Ensure PHP is installed
-  nonsense
     apt: name=php7.2=7.2.24* state=present
     become: yes
   - name: Ensure PHP Module for Apache is installed
