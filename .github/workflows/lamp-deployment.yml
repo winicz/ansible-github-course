@@ -4,7 +4,7 @@ on:
      workflow_dispatch:
 
 jobs:
-  linting
+  linting:
     name: Lint Ansible files
     runs-on: ubuntu-latest
 
